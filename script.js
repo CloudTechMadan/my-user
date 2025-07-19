@@ -2,7 +2,7 @@ const domain = 'https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.
 const clientId = '8me27q0v6uiackv03hbqoa1p3';
 const redirectUri = window.location.origin + window.location.pathname;
 const scope = 'email openid profile employee-api/employee-access';
-const responseType = 'token';
+const responseType = 'token id';
 
 const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/markAttendance';
 const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
@@ -16,6 +16,7 @@ function parseTokenFromUrl() {
     const params = new URLSearchParams(hash.substring(1));
     accessToken = params.get('access_token');
     localStorage.setItem('access_token', accessToken);
+    console.log("Access Token:", accessToken);
     // Remove token from URL
     window.history.replaceState({}, document.title, redirectUri);
   } else {
