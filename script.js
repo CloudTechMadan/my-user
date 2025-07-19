@@ -16,7 +16,6 @@ function parseTokenFromUrl() {
     const params = new URLSearchParams(hash.substring(1));
     accessToken = params.get('access_token');
     localStorage.setItem('access_token', accessToken);
-    console.log("Access Token:", accessToken);
     // Remove token from URL
     window.history.replaceState({}, document.title, redirectUri);
   } else {
