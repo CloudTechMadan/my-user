@@ -102,3 +102,12 @@ function capture() {
     }
   }, 'image/jpeg');
 }
+function logout() {
+  // Remove token from localStorage
+  localStorage.removeItem('access_token');
+
+  // Redirect to Cognito's logout endpoint
+  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  window.location.href = logoutUrl;
+}
+
