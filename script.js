@@ -93,8 +93,15 @@ function capture() {
         body: JSON.stringify({ s3Key: fileName })
       });
 
-      const resultText = await attendanceResp.text();
-      status.textContent = `✅ ${resultText}`;
+      const result = await attendanceResp.json();
+      if (attendanceResp.ok) {
+        status.innerHTML = `
+        <p style="color: green; font-weight: bold;">${result.message}</p>
+        <p style="font-size: 0.95rem; color: #555;">🕒 ${result.timestamp_ist}</p>
+        `;
+      } else {
+        status.innerHTML = `<span style="color: red;">❌ ${result.error || 'Attendance failed'}</span>`;
+      }
 
     } catch (err) {
       console.error(err);
