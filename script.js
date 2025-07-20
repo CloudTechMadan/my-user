@@ -1,6 +1,6 @@
 const domain = 'https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com';
 const clientId = '8me27q0v6uiackv03hbqoa1p3';
-const redirectUri = window.location.origin + window.location.pathname;
+const redirectUri = 'https://cloudtechmadan.github.io/my-user/';
 const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id';
 
