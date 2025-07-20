@@ -1,4 +1,4 @@
-const BASE_API = "https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod";
+const BASE_API = "https://jprbceq0dk.execute-api.us-east-1.amazonaws.com";
 const historyUrl = `${BASE_API}/getAttendanceHistory`;
 
 const token = localStorage.getItem("access_token");
