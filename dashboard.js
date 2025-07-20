@@ -16,7 +16,7 @@ document.getElementById("loadHistoryBtn").addEventListener("click", async () => 
     const response = await fetch(historyUrl, {
       method: "GET",
       headers: {
-        Authorization: token
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -24,7 +24,7 @@ document.getElementById("loadHistoryBtn").addEventListener("click", async () => 
 
     if (response.ok) {
       const history = data.history;
-      if (history.length === 0) {
+      if (!history || history.length === 0) {
         container.innerHTML = "<p>No attendance history found.</p>";
         return;
       }
@@ -37,11 +37,11 @@ document.getElementById("loadHistoryBtn").addEventListener("click", async () => 
       container.innerHTML = html;
 
     } else {
-      container.innerHTML = `<p style="color: red;">Error: ${data.error || "Unable to fetch"}</p>`;
+      container.innerHTML = `<p style="color: red;">Error: ${data.error || "Unable to fetch attendance history."}</p>`;
     }
 
   } catch (err) {
     console.error("Error:", err);
-    container.innerHTML = `<p style="color: red;">Something went wrong.</p>`;
+    container.innerHTML = `<p style="color: red;">Something went wrong while fetching data.</p>`;
   }
 });
