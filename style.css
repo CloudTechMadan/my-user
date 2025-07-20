@@ -58,3 +58,12 @@ button:hover {
   font-size: 14px;
   color: #333;
 }
+
+.attendance-entry {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
