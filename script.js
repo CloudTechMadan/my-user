@@ -4,8 +4,8 @@ const redirectUri = 'https://cloudtechmadan.github.io/my-user/';
 const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id';
 
-const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod/markAttendance';
-const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod/getAttendanceImageUrl';
+const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/markAttendance';
+const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
 
 let accessToken = null;
 
@@ -59,7 +59,7 @@ function capture() {
     status.textContent = '⬆️ Uploading...';
 
     try {
-      // 1. Get presigned URL
+      // 1. Get presigned URL from backend
       const presignResp = await fetch(presignUrlApi, {
         method: 'POST',
         headers: {
@@ -72,16 +72,18 @@ function capture() {
       if (!presignResp.ok) throw new Error('❌ Failed to get pre-signed URL');
       const { url } = await presignResp.json();
 
-      // 2. Upload image to S3
+      // 2. Upload to S3
       const uploadResp = await fetch(url, {
         method: 'PUT',
-        headers: { 'Content-Type': 'image/jpeg' },
+        headers: {
+          'Content-Type': 'image/jpeg'
+        },
         body: blob
       });
 
       if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
-      // 3. Call attendance API
+      // 3. Trigger attendance marking
       const attendanceResp = await fetch(attendanceApi, {
         method: 'POST',
         headers: {
@@ -92,11 +94,10 @@ function capture() {
       });
 
       const result = await attendanceResp.json();
-
       if (attendanceResp.ok) {
         status.innerHTML = `
-          <p style="color: green; font-weight: bold;">${result.message}</p>
-          <p style="font-size: 0.95rem; color: #555;">🕒 ${result.timestamp_ist}</p>
+        <p style="color: green; font-weight: bold;">${result.message}</p>
+        <p style="font-size: 0.95rem; color: #555;">🕒 ${result.timestamp_ist}</p>
         `;
       } else {
         status.innerHTML = `<span style="color: red;">❌ ${result.error || 'Attendance failed'}</span>`;
@@ -108,13 +109,14 @@ function capture() {
     }
   }, 'image/jpeg');
 }
-
 function logout() {
   // Clear tokens and session info
   localStorage.removeItem('access_token');
   sessionStorage.clear();
 
   // Construct logout URL using global constants
-  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/login?client_id=8me27q0v6uiackv03hbqoa1p3&response_type=token&scope=email+employee-api%2Femployee-access+openid+profile&redirect_uri=https//cloudtechmadan.github.io/my-user/`;
+  const logoutUrl = `https://${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = logoutUrl;
 }
+
+
