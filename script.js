@@ -103,11 +103,8 @@ function capture() {
   }, 'image/jpeg');
 }
 function logout() {
-  // Clear tokens and session info
   localStorage.removeItem('access_token');
   sessionStorage.clear();
-
-  // Construct logout URL using global constants
   const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = logoutUrl;
 }
