@@ -115,6 +115,6 @@ function logout() {
   sessionStorage.clear();
 
   // Construct logout URL using global constants
-  const logoutUrl = `https://${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/login?client_id=8me27q0v6uiackv03hbqoa1p3&response_type=token&scope=email+employee-api%2Femployee-access+openid+profile&redirect_uri=https//cloudtechmadan.github.io/my-user/`;
   window.location.href = logoutUrl;
 }
