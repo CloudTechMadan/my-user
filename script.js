@@ -59,7 +59,7 @@ function capture() {
     status.textContent = '⬆️ Uploading...';
 
     try {
-      // 1. Get presigned URL from backend
+      // 1. Get presigned URL
       const presignResp = await fetch(presignUrlApi, {
         method: 'POST',
         headers: {
@@ -72,18 +72,16 @@ function capture() {
       if (!presignResp.ok) throw new Error('❌ Failed to get pre-signed URL');
       const { url } = await presignResp.json();
 
-      // 2. Upload to S3
+      // 2. Upload image to S3
       const uploadResp = await fetch(url, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'image/jpeg'
-        },
+        headers: { 'Content-Type': 'image/jpeg' },
         body: blob
       });
 
       if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
-      // 3. Trigger attendance marking
+      // 3. Call attendance API
       const attendanceResp = await fetch(attendanceApi, {
         method: 'POST',
         headers: {
@@ -93,8 +91,16 @@ function capture() {
         body: JSON.stringify({ s3Key: fileName })
       });
 
-      const resultText = await attendanceResp.text();
-      status.textContent = `✅ ${resultText}`;
+      const result = await attendanceResp.json();
+
+      if (attendanceResp.ok) {
+        status.innerHTML = `
+          <p style="color: green; font-weight: bold;">${result.message}</p>
+          <p style="font-size: 0.95rem; color: #555;">🕒 ${result.timestamp_ist}</p>
+        `;
+      } else {
+        status.innerHTML = `<span style="color: red;">❌ ${result.error || 'Attendance failed'}</span>`;
+      }
 
     } catch (err) {
       console.error(err);
