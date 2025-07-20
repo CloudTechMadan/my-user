@@ -103,11 +103,9 @@ function capture() {
   }, 'image/jpeg');
 }
 function logout() {
-  // Remove token from localStorage
   localStorage.removeItem('access_token');
-
-  // Redirect to Cognito's logout endpoint
-  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  const logoutUrl = "https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=8me27q0v6uiackv03hbqoa1p3&logout_uri=https%3A%2F%2Fcloudtechmadan.github.io%2Fmy-user%2F";
   window.location.href = logoutUrl;
 }
+
 
