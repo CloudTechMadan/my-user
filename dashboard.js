@@ -16,33 +16,33 @@ document.getElementById("loadHistoryBtn").addEventListener("click", async () => 
     const response = await fetch(historyUrl, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: token
       }
     });
 
-    
     const data = await response.json();
 
     if (response.ok) {
       const history = data.history;
-      if (!history || history.length === 0) {
+      if (history.length === 0) {
         container.innerHTML = "<p>No attendance history found.</p>";
         return;
       }
 
-      let html = "<ul>";
+      let html = `<p><strong>Employee ID:</strong> ${data.employeeId}<br><strong>Name:</strong> ${data.name}</p>`;
+      html += "<ul>";
       for (const record of history) {
-        html += `<li><strong>${record.Time}</strong> - ${record.Name} (${record.EmployeeID})</li>`;
+        html += `<li><strong>${record.Time}</strong> - Attendance marked</li>`;
       }
       html += "</ul>";
       container.innerHTML = html;
 
     } else {
-      container.innerHTML = `<p style="color: red;">Error: ${data.error || "Unable to fetch attendance history."}</p>`;
+      container.innerHTML = `<p style="color: red;">Error: ${data.error || "Unable to fetch"}</p>`;
     }
 
   } catch (err) {
     console.error("Error:", err);
-    container.innerHTML = `<p style="color: red;">Something went wrong while fetching data.</p>`;
+    container.innerHTML = `<p style="color: red;">Something went wrong.</p>`;
   }
 });
