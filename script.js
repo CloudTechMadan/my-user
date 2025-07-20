@@ -9,26 +9,32 @@ const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/ge
 
 let accessToken = null;
 
+// Get access token from URL or localStorage
 function parseTokenFromUrl() {
   const hash = window.location.hash;
   if (hash.includes('access_token')) {
     const params = new URLSearchParams(hash.substring(1));
     accessToken = params.get('access_token');
     localStorage.setItem('access_token', accessToken);
+    // Remove token from URL
     window.history.replaceState({}, document.title, redirectUri);
   } else {
     accessToken = localStorage.getItem('access_token');
   }
 }
 
+// Redirect to Cognito login
 function redirectToLogin() {
   const loginUrl = `${domain}/login?client_id=${clientId}&response_type=${responseType}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = loginUrl;
 }
 
 parseTokenFromUrl();
-if (!accessToken) redirectToLogin();
+if (!accessToken) {
+  redirectToLogin();
+}
 
+// Access webcam
 navigator.mediaDevices.getUserMedia({ video: true })
   .then(stream => {
     document.getElementById('video').srcObject = stream;
@@ -39,6 +45,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
     document.getElementById('status').textContent = '❌ Camera access denied!';
   });
 
+// Capture image and upload
 function capture() {
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
@@ -52,6 +59,7 @@ function capture() {
     status.textContent = '⬆️ Uploading...';
 
     try {
+      // 1. Get presigned URL from backend
       const presignResp = await fetch(presignUrlApi, {
         method: 'POST',
         headers: {
@@ -64,14 +72,18 @@ function capture() {
       if (!presignResp.ok) throw new Error('❌ Failed to get pre-signed URL');
       const { url } = await presignResp.json();
 
+      // 2. Upload to S3
       const uploadResp = await fetch(url, {
         method: 'PUT',
-        headers: { 'Content-Type': 'image/jpeg' },
+        headers: {
+          'Content-Type': 'image/jpeg'
+        },
         body: blob
       });
 
       if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
+      // 3. Trigger attendance marking
       const attendanceResp = await fetch(attendanceApi, {
         method: 'POST',
         headers: {
@@ -81,14 +93,8 @@ function capture() {
         body: JSON.stringify({ s3Key: fileName })
       });
 
-      const result = await attendanceResp.json();
-      if (attendanceResp.ok) {
-        status.innerHTML = `
-          <p style="color: green; font-weight: bold;">${result.message}</p>
-          <p style="font-size: 0.95rem; color: #555;">🕒 ${result.timestamp_ist}</p>`;
-      } else {
-        status.innerHTML = `<span style="color: red;">❌ ${result.error || 'Attendance failed'}</span>`;
-      }
+      const resultText = await attendanceResp.text();
+      status.textContent = `✅ ${resultText}`;
 
     } catch (err) {
       console.error(err);
@@ -96,14 +102,12 @@ function capture() {
     }
   }, 'image/jpeg');
 }
-
-function goToDashboard() {
-  window.location.href = 'dashboard.html';
-}
-
 function logout() {
+  // Clear tokens and session info
   localStorage.removeItem('access_token');
   sessionStorage.clear();
-  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=8me27q0v6uiackv03hbqoa1p3&logout_uri=https://cloudtechmadan.github.io/my-user/`;
+
+  // Construct logout URL using global constants
+  const logoutUrl = `https://${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = logoutUrl;
 }
