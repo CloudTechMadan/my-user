@@ -102,6 +102,7 @@ function capture() {
     }
   }, 'image/jpeg');
 }
+
 function logout() {
   // Clear tokens and session info
   localStorage.removeItem('access_token');
