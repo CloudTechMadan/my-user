@@ -109,6 +109,9 @@ function capture() {
     }
   }, 'image/jpeg');
 }
+function goToDashboard() {
+  window.location.href = 'dashboard.html';
+}
 function logout() {
   // Clear tokens and session info
   localStorage.removeItem('access_token');
