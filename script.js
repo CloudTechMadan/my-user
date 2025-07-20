@@ -5,7 +5,7 @@ const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id';
 
 const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod/markAttendance';
-const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
+const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod/getAttendanceImageUrl';
 
 let accessToken = null;
 
