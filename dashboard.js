@@ -20,6 +20,7 @@ document.getElementById("loadHistoryBtn").addEventListener("click", async () => 
       }
     });
 
+    
     const data = await response.json();
 
     if (response.ok) {
