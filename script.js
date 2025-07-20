@@ -4,8 +4,8 @@ const redirectUri = 'https://cloudtechmadan.github.io/my-user/';
 const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id';
 
-const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod/markAttendance';
-const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/prod/getAttendanceImageUrl';
+const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/markAttendance';
+const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
 
 let accessToken = null;
 
@@ -29,7 +29,6 @@ function redirectToLogin() {
   window.location.href = loginUrl;
 }
 
-// Parse token and redirect if not available
 parseTokenFromUrl();
 if (!accessToken) {
   redirectToLogin();
@@ -94,16 +93,8 @@ function capture() {
         body: JSON.stringify({ s3Key: fileName })
       });
 
-      const result = await attendanceResp.json();
-
-      if (attendanceResp.ok) {
-        status.innerHTML = `
-          <p style="color: green; font-weight: bold;">${result.message}</p>
-          <p style="font-size: 0.95rem; color: #555;">🕒 ${result.timestamp_ist}</p>
-        `;
-      } else {
-        status.innerHTML = `<span style="color: red;">❌ ${result.error || 'Attendance failed'}</span>`;
-      }
+      const resultText = await attendanceResp.text();
+      status.textContent = `✅ ${resultText}`;
 
     } catch (err) {
       console.error(err);
@@ -111,12 +102,12 @@ function capture() {
     }
   }, 'image/jpeg');
 }
-
-// Logout function
 function logout() {
+  // Clear tokens and session info
   localStorage.removeItem('access_token');
   sessionStorage.clear();
 
-  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  // Construct logout URL using global constants
+  const logoutUrl = `https://${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = logoutUrl;
 }
