@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const errorMsg = resultJson.message || '❌ Something went wrong.';
           status.textContent = errorMsg;
         }
+        
       } catch (err) {
         console.error(err);
         status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
