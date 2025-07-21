@@ -9,14 +9,16 @@
 <body>
   <div class="container">
     <h1>Face Attendance System</h1>
+    <div id="userInfo" class="user-info">👤 Logged in</div>
+
     <p class="description">Click capture to mark your attendance using face recognition.</p>
 
     <video id="video" width="320" autoplay muted></video>
     <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
 
     <div class="controls">
-      <button onclick="capture()">📷 Capture & Submit</button>
-      <button onclick="logout()">Logout</button>
+      <button id="captureBtn">📷 Capture & Submit</button>
+      <button id="logoutBtn">Logout</button>
     </div>
 
     <p id="status">Initializing...</p>
