@@ -260,11 +260,16 @@ a {
   animation: spin 0.9s linear infinite;
 }
 
+/* ✅ Fix: Preserve center positioning during spin */
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
+
 
 button, .user-info, .attendance-entry, #attendance-list li {
   transition: all 0.3s ease-in-out;
