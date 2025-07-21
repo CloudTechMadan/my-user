@@ -119,12 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const resultJson = await attendanceResp.json();
-        if (resultJson?.message && resultJson?.TimestampIST) {
-          status.textContent = `✅ ${resultJson.message} at ${resultJson.TimestampIST}`;
+        if (attendanceResp.ok) {
+          const msg = resultJson.message || '✅ Attendance marked.';
+          const timestamp = resultJson.TimestampIST ? ` at ${resultJson.TimestampIST}` : '';
+          status.textContent = `${msg}${timestamp}`;
         } else {
-          status.textContent = '✅ Attendance marked, but no timestamp returned.';
+          const errorMsg = resultJson.message || '❌ Something went wrong.';
+          status.textContent = errorMsg;
         }
-
       } catch (err) {
         console.error(err);
         status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
