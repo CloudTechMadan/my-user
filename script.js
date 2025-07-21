@@ -125,7 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
           status.textContent = `${msg}${timestamp}`;
         } else {
           const errorMsg = resultJson.message || '❌ Something went wrong.';
-          status.textContent = errorMsg;
+          if (resultJson.error) {
+            status.textContent = `${errorMsg}\n🪵 ${resultJson.error}`;
+          } else {
+            status.textContent = errorMsg;
+          }
         }
         
       } catch (err) {
