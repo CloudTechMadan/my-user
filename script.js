@@ -7,6 +7,7 @@ const responseType = 'token id_token';
 const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/markAttendance';
 const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
 
+// Token Expiry Check
 function isTokenExpired(token) {
   try {
     const [, payloadBase64] = token.split(".");
@@ -18,6 +19,7 @@ function isTokenExpired(token) {
   }
 }
 
+// Parse tokens from URL and save to localStorage
 function parseTokensFromUrl() {
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
@@ -27,13 +29,8 @@ function parseTokensFromUrl() {
   if (accessToken && idToken) {
     localStorage.setItem("access_token", accessToken);
     localStorage.setItem("id_token", idToken);
-    window.history.replaceState({}, document.title, redirectUri); // Clean URL
+    window.location.hash = ""; // Clean URL
   }
-}
-
-function redirectToLogin() {
-  const loginUrl = `${domain}/login?client_id=${clientId}&response_type=${responseType}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-  window.location.href = loginUrl;
 }
 
 parseTokensFromUrl();
@@ -43,9 +40,11 @@ const idToken = localStorage.getItem("id_token");
 
 if (!accessToken || isTokenExpired(accessToken)) {
   localStorage.clear();
-  redirectToLogin();
+  const loginUrl = `${domain}/login?client_id=${clientId}&response_type=${responseType}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  window.location.href = loginUrl;
 }
 
+// Show user info
 function showUserInfo(token) {
   try {
     const [, payloadBase64] = token.split(".");
@@ -56,10 +55,17 @@ function showUserInfo(token) {
     document.getElementById("userInfo").textContent = "Logged in";
   }
 }
-
 showUserInfo(idToken);
 
-// Start webcam
+// Logout
+function logout() {
+  localStorage.clear();
+  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  window.location.href = logoutUrl;
+}
+document.getElementById("logoutBtn").addEventListener("click", logout);
+
+// Camera Access
 navigator.mediaDevices.getUserMedia({ video: true })
   .then(stream => {
     document.getElementById('video').srcObject = stream;
@@ -70,13 +76,15 @@ navigator.mediaDevices.getUserMedia({ video: true })
     document.getElementById('status').textContent = '❌ Camera access denied!';
   });
 
-// Capture image and mark attendance
+// Capture & Upload
 function capture() {
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const status = document.getElementById('status');
+  const captureBtn = document.getElementById('captureBtn');
 
+  captureBtn.disabled = true;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   canvas.toBlob(async (blob) => {
@@ -84,7 +92,7 @@ function capture() {
     status.textContent = '⬆️ Uploading...';
 
     try {
-      // Step 1: Get presigned URL
+      // Step 1: Get pre-signed URL
       const presignResp = await fetch(presignUrlApi, {
         method: 'POST',
         headers: {
@@ -108,7 +116,7 @@ function capture() {
 
       if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
-      // Step 3: Mark attendance
+      // Step 3: Mark Attendance
       const attendanceResp = await fetch(attendanceApi, {
         method: 'POST',
         headers: {
@@ -127,14 +135,9 @@ function capture() {
 
     } catch (err) {
       console.error(err);
-      status.textContent = '❌ Something went wrong.';
+      status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
+    } finally {
+      captureBtn.disabled = false;
     }
   }, 'image/jpeg');
 }
-
-// Logout
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.clear();
-  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
-  window.location.href = logoutUrl;
-});
