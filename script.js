@@ -1,6 +1,6 @@
 const domain = 'https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com';
 const clientId = '8me27q0v6uiackv03hbqoa1p3';
-const redirectUri = 'https://cloudtechmadan.github.io/my-user/';
+const redirectUri = 'https://cloudtechmadan.github.io/my-user/index.html';
 const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id_token';
 
@@ -108,7 +108,8 @@ function capture() {
 }
 function logout() {
   localStorage.removeItem('access_token');
-  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri + 'index.html')}`;
-  window.location.href = "https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=8me27q0v6uiackv03hbqoa1p3&logout_uri=https://cloudtechmadan.github.io/my-user/";
+  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  window.location.href = logoutUrl;
 }
+
 
