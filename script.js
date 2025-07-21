@@ -96,23 +96,24 @@ document.addEventListener('DOMContentLoaded', () => {
       let address = 'Unknown';
       let pincode = 'Unknown';
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`);
         const data = await response.json();
         if (data && data.address) {
           const addr = data.address;
           address = [
             addr.house_number,
             addr.road,
-            addr.neighbourhood,
-            addr.suburb,
-            addr.city || addr.town || addr.village,
+            addr.residential || addr.neighbourhood || addr.suburb,
+            addr.city || addr.town || addr.village || addr.county,
             addr.state,
-            addr.country,
+            addr.country
           ].filter(Boolean).join(', ');
           pincode = addr.postcode || 'Unknown';
+          console.log("🗺️ Full Address:", address);
+          console.log("📮 Pincode:", pincode);
         }
       } catch (err) {
-        console.error('Reverse geocoding failed:', err);
+        console.error('⚠️ Reverse geocoding failed:', err);
       }
 
       try {
