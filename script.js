@@ -191,11 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 🟩 Show Past Attendance List
   const attendanceList = document.getElementById("attendance-list");
+const errorDiv = document.getElementById("errorMessage");  // 🔹 Error message element
 
-  async function fetchAttendanceHistory() {
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
+async function fetchAttendanceHistory() {
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    errorDiv.textContent = "⚠️ No token found. Please log in again.";
+    return;
+  }
 
+  try {
     const response = await fetch("https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceRecords", {
       method: "GET",
       headers: {
@@ -203,15 +208,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      attendanceList.innerHTML = `<li class="text-red-600">Error fetching attendance</li>`;
+      const errMsg = result.message || "Failed to fetch attendance records.";
+      errorDiv.textContent = `⚠️ ${errMsg}`;
       return;
     }
 
-    const result = await response.json();
-
     if (!result || result.length === 0) {
       attendanceList.innerHTML = `<li class="text-gray-600">No attendance records found.</li>`;
+      errorDiv.textContent = "";
       return;
     }
 
@@ -229,8 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       attendanceList.appendChild(li);
     });
-  }
 
+    errorDiv.textContent = ""; // 🔹 Clear error on success
+  } catch (error) {
+    console.error("Fetch error:", error);
+    errorDiv.textContent = `⚠️ ${error.message || "An unexpected error occurred while fetching attendance."}`;
+  }
+}
   fetchAttendanceHistory();
 
 });
