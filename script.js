@@ -75,20 +75,27 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("captureBtn").addEventListener("click", capture);
 
   function capture() {
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const status = document.getElementById('status');
-    const captureBtn = document.getElementById('captureBtn');
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const status = document.getElementById('status');
+  const captureBtn = document.getElementById('captureBtn');
 
-    captureBtn.disabled = true;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  captureBtn.disabled = true;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    canvas.toBlob(async (blob) => {
-      const fileName = `attendance/${Date.now()}.jpg`;
-      status.textContent = '⬆️ Uploading...';
+  canvas.toBlob(async (blob) => {
+    const fileName = `attendance/${Date.now()}.jpg`;
+    status.textContent = '📍 Getting location...';
+
+    // Get browser location
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
 
       try {
+        status.textContent = '⬆️ Uploading image...';
+
         const presignResp = await fetch(presignUrlApi, {
           method: 'POST',
           headers: {
@@ -109,13 +116,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
+        // Send attendance with geolocation
+        status.textContent = '📡 Marking attendance...';
         const attendanceResp = await fetch(attendanceApi, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
           },
-          body: JSON.stringify({ s3Key: fileName })
+          body: JSON.stringify({
+            s3Key: fileName,
+            latitude,
+            longitude
+          })
         });
 
         const resultJson = await attendanceResp.json();
@@ -125,19 +138,22 @@ document.addEventListener('DOMContentLoaded', () => {
           status.textContent = `${msg}${timestamp}`;
         } else {
           const errorMsg = resultJson.message || '❌ Something went wrong.';
-          if (resultJson.error) {
-            status.textContent = `${errorMsg}\n🪵 ${resultJson.error}`;
-          } else {
-            status.textContent = errorMsg;
-          }
+          status.textContent = resultJson.error
+            ? `${errorMsg}\n🪵 ${resultJson.error}`
+            : errorMsg;
         }
-        
+
       } catch (err) {
         console.error(err);
         status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
       } finally {
         captureBtn.disabled = false;
       }
-    }, 'image/jpeg');
-  }
+
+    }, (err) => {
+      status.textContent = '❌ Location access denied. Please enable location to proceed.';
+      captureBtn.disabled = false;
+    });
+  }, 'image/jpeg');
+}
 });
