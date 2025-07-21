@@ -201,7 +201,7 @@ async function fetchAttendanceHistory() {
   }
 
   try {
-    const response = await fetch("https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceRecords", {
+    const response = await fetch("https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceHistory", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`
