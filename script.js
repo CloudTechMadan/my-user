@@ -231,9 +231,8 @@ async function fetchAttendanceHistory() {
       li.className = "bg-gray-100 p-2 mb-2 rounded shadow";
       li.innerHTML = `
         <strong>🕒 Date (IST):</strong> ${rec.TimestampIST}<br>
-        <strong>📍 Location:</strong> ${rec.address || "N/A"}<br>
-        <strong>📮 Pincode:</strong> ${rec.pincode || "N/A"}<br>
-        <strong>🖼️ Photo:</strong> <a href="https://face-attendance-system-using-rek.s3.amazonaws.com/${rec.s3Key}" target="_blank">View</a>
+        <strong>📍 Location:</strong> ${rec.Address || "N/A"}<br>
+        <strong>📮 Pincode:</strong> ${rec.Pincode || "N/A"}<br>
       `;
       attendanceList.appendChild(li);
     });
