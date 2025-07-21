@@ -92,6 +92,28 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
+      // Reverse Geocoding using Nominatim
+      let address = 'Unknown';
+      let pincode = 'Unknown';
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        const data = await response.json();
+        if (data && data.address) {
+          const addr = data.address;
+          address = [
+            addr.house_number,
+            addr.road,
+            addr.neighbourhood,
+            addr.suburb,
+            addr.city || addr.town || addr.village,
+            addr.state,
+            addr.country,
+          ].filter(Boolean).join(', ');
+          pincode = addr.postcode || 'Unknown';
+        }
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err);
+      }
 
       try {
         status.textContent = '⬆️ Uploading image...';
@@ -127,7 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({
             s3Key: fileName,
             latitude,
-            longitude
+            longitude,
+            address,
+            pincode
           })
         });
 
