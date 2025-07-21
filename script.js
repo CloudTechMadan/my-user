@@ -107,7 +107,3 @@ function capture() {
   }, 'image/jpeg');
 }
 
-function logout() {
-  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=8me27q0v6uiackv03hbqoa1p3&logout_uri=https://cloudtechmadan.github.io/my-user/`;
-  window.location.href = logoutUrl;
-}
