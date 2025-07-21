@@ -110,7 +110,7 @@ function logout() {
   localStorage.removeItem('access_token');
   sessionStorage.clear();
 
-  const loginRedirectUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/login?client_id=8me27q0v6uiackv03hbqoa1p3&response_type=token&scope=openid%20profile%20email%20employee-api/employee-access&redirect_uri=https://cloudtechmadan.github.io/my-user/`;
+  const loginRedirectUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/login?client_id=8me27q0v6uiackv03hbqoa1p3&response_type=token&scope=email+employee-api%2Femployee-access+openid+profile&redirect_uri=https%3A%2F%2Fcloudtechmadan.github.io%2Fmy-user%2F`;
 
   const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=8me27q0v6uiackv03hbqoa1p3&logout_uri=${encodeURIComponent(loginRedirectUrl)}`;
 
