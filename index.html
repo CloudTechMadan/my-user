@@ -10,16 +10,18 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast">Toast message!</div>
 
-  <!-- Loading Spinner -->
-  <div id="spinner" class="spinner"></div>
-
   <div class="container">
     <h1>Face Attendance System</h1>
     <div id="userInfo" class="user-info">👤 Logged in</div>
 
     <p class="description">Click capture to mark your attendance using face recognition.</p>
 
-    <video id="video" width="320" autoplay muted></video>
+    <!-- ✅ Wrap video and spinner together -->
+    <div class="video-wrapper">
+      <video id="video" width="320" autoplay muted></video>
+      <div id="spinner" class="spinner"></div>
+    </div>
+
     <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
 
     <div class="controls">
