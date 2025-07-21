@@ -1,41 +1,65 @@
 const domain = 'https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com';
 const clientId = '8me27q0v6uiackv03hbqoa1p3';
-const redirectUri = window.location.origin + window.location.pathname;  // Handles both with/without index.html
+const redirectUri = window.location.origin + window.location.pathname;
 const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id_token';
 
 const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/markAttendance';
 const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
 
-let accessToken = null;
-
-// Get access token from URL or localStorage
-function parseTokenFromUrl() {
-  const hash = window.location.hash;
-  if (hash.includes('access_token')) {
-    const params = new URLSearchParams(hash.substring(1));
-    accessToken = params.get('access_token');
-    localStorage.setItem('access_token', accessToken);
-
-    // Remove token from URL
-    window.history.replaceState({}, document.title, redirectUri);
-  } else {
-    accessToken = localStorage.getItem('access_token');
+function isTokenExpired(token) {
+  try {
+    const [, payloadBase64] = token.split(".");
+    const payload = JSON.parse(atob(payloadBase64));
+    const exp = payload.exp * 1000;
+    return Date.now() > exp;
+  } catch {
+    return true;
   }
 }
 
-// Redirect to Cognito login
+function parseTokensFromUrl() {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get("access_token");
+  const idToken = params.get("id_token");
+
+  if (accessToken && idToken) {
+    localStorage.setItem("access_token", accessToken);
+    localStorage.setItem("id_token", idToken);
+    window.history.replaceState({}, document.title, redirectUri); // Clean URL
+  }
+}
+
 function redirectToLogin() {
   const loginUrl = `${domain}/login?client_id=${clientId}&response_type=${responseType}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = loginUrl;
 }
 
-parseTokenFromUrl();
-if (!accessToken) {
+parseTokensFromUrl();
+
+const accessToken = localStorage.getItem("access_token");
+const idToken = localStorage.getItem("id_token");
+
+if (!accessToken || isTokenExpired(accessToken)) {
+  localStorage.clear();
   redirectToLogin();
 }
 
-// Access webcam
+function showUserInfo(token) {
+  try {
+    const [, payloadBase64] = token.split(".");
+    const payload = JSON.parse(atob(payloadBase64));
+    const email = payload.email || payload["cognito:username"] || "Unknown user";
+    document.getElementById("userInfo").innerHTML = `👤 Logged in as <strong>${email}</strong>`;
+  } catch {
+    document.getElementById("userInfo").textContent = "Logged in";
+  }
+}
+
+showUserInfo(idToken);
+
+// Start webcam
 navigator.mediaDevices.getUserMedia({ video: true })
   .then(stream => {
     document.getElementById('video').srcObject = stream;
@@ -46,7 +70,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
     document.getElementById('status').textContent = '❌ Camera access denied!';
   });
 
-// Capture image and upload
+// Capture image and mark attendance
 function capture() {
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
@@ -109,8 +133,8 @@ function capture() {
 }
 
 // Logout
-function logout() {
-  localStorage.removeItem('access_token');
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.clear();
   const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = logoutUrl;
-}
+});
