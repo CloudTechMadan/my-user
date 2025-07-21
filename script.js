@@ -96,7 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
       let address = 'Unknown';
       let pincode = 'Unknown';
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`);
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+          {
+            headers: {
+              'Accept-Language': 'en'  // 👈 Forces English language
+              }
+          }
+        );
         const data = await response.json();
         if (data && data.address) {
           const addr = data.address;
