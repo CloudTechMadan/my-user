@@ -75,117 +75,162 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("captureBtn").addEventListener("click", capture);
 
   function capture() {
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const status = document.getElementById('status');
-  const captureBtn = document.getElementById('captureBtn');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const captureBtn = document.getElementById('captureBtn');
 
-  captureBtn.disabled = true;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    captureBtn.disabled = true;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  canvas.toBlob(async (blob) => {
-    const fileName = `attendance/${Date.now()}.jpg`;
-    status.textContent = '📍 Getting location...';
+    canvas.toBlob(async (blob) => {
+      const fileName = `attendance/${Date.now()}.jpg`;
+      status.textContent = '📍 Getting location...';
 
-    // Get browser location
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      // Reverse Geocoding using Nominatim
-      let address = 'Unknown';
-      let pincode = 'Unknown';
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
-          {
-            headers: {
-              'Accept-Language': 'en'  // 👈 Forces English language
+      // Get browser location
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        // Reverse Geocoding using Nominatim
+        let address = 'Unknown';
+        let pincode = 'Unknown';
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'en'  // 👈 Forces English language
               }
+            }
+          );
+          const data = await response.json();
+          if (data && data.address) {
+            const addr = data.address;
+            address = [
+              addr.house_number,
+              addr.road,
+              addr.residential || addr.neighbourhood || addr.suburb,
+              addr.city || addr.town || addr.village || addr.county,
+              addr.state,
+              addr.country
+            ].filter(Boolean).join(', ');
+            pincode = addr.postcode || 'Unknown';
+            console.log("🗺️ Full Address:", address);
+            console.log("📮 Pincode:", pincode);
           }
-        );
-        const data = await response.json();
-        if (data && data.address) {
-          const addr = data.address;
-          address = [
-            addr.house_number,
-            addr.road,
-            addr.residential || addr.neighbourhood || addr.suburb,
-            addr.city || addr.town || addr.village || addr.county,
-            addr.state,
-            addr.country
-          ].filter(Boolean).join(', ');
-          pincode = addr.postcode || 'Unknown';
-          console.log("🗺️ Full Address:", address);
-          console.log("📮 Pincode:", pincode);
-        }
-      } catch (err) {
-        console.error('⚠️ Reverse geocoding failed:', err);
-      }
-
-      try {
-        status.textContent = '⬆️ Uploading image...';
-
-        const presignResp = await fetch(presignUrlApi, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({ key: fileName })
-        });
-
-        if (!presignResp.ok) throw new Error('❌ Failed to get pre-signed URL');
-        const { url } = await presignResp.json();
-
-        const uploadResp = await fetch(url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'image/jpeg' },
-          body: blob
-        });
-
-        if (!uploadResp.ok) throw new Error('❌ Upload failed');
-
-        // Send attendance with geolocation
-        status.textContent = '📡 Marking attendance...';
-        const attendanceResp = await fetch(attendanceApi, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({
-            s3Key: fileName,
-            latitude,
-            longitude,
-            address,
-            pincode
-          })
-        });
-
-        const resultJson = await attendanceResp.json();
-        if (attendanceResp.ok) {
-          const msg = resultJson.message || '✅ Attendance marked.';
-          const timestamp = resultJson.TimestampIST ? ` at ${resultJson.TimestampIST}` : '';
-          status.textContent = `${msg}${timestamp}`;
-        } else {
-          const errorMsg = resultJson.message || '❌ Something went wrong.';
-          status.textContent = resultJson.error
-            ? `${errorMsg}\n🪵 ${resultJson.error}`
-            : errorMsg;
+        } catch (err) {
+          console.error('⚠️ Reverse geocoding failed:', err);
         }
 
-      } catch (err) {
-        console.error(err);
-        status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
-      } finally {
+        try {
+          status.textContent = '⬆️ Uploading image...';
+
+          const presignResp = await fetch(presignUrlApi, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({ key: fileName })
+          });
+
+          if (!presignResp.ok) throw new Error('❌ Failed to get pre-signed URL');
+          const { url } = await presignResp.json();
+
+          const uploadResp = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'image/jpeg' },
+            body: blob
+          });
+
+          if (!uploadResp.ok) throw new Error('❌ Upload failed');
+
+          // Send attendance with geolocation
+          status.textContent = '📡 Marking attendance...';
+          const attendanceResp = await fetch(attendanceApi, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              s3Key: fileName,
+              latitude,
+              longitude,
+              address,
+              pincode
+            })
+          });
+
+          const resultJson = await attendanceResp.json();
+          if (attendanceResp.ok) {
+            const msg = resultJson.message || '✅ Attendance marked.';
+            const timestamp = resultJson.TimestampIST ? ` at ${resultJson.TimestampIST}` : '';
+            status.textContent = `${msg}${timestamp}`;
+          } else {
+            const errorMsg = resultJson.message || '❌ Something went wrong.';
+            status.textContent = resultJson.error
+              ? `${errorMsg}\n🪵 ${resultJson.error}`
+              : errorMsg;
+          }
+
+        } catch (err) {
+          console.error(err);
+          status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
+        } finally {
+          captureBtn.disabled = false;
+        }
+
+      }, (err) => {
+        status.textContent = '❌ Location access denied. Please enable location to proceed.';
         captureBtn.disabled = false;
-      }
+      });
+    }, 'image/jpeg');
+  }
 
-    }, (err) => {
-      status.textContent = '❌ Location access denied. Please enable location to proceed.';
-      captureBtn.disabled = false;
+  // 🟩 Show Past Attendance List
+  const attendanceList = document.getElementById("attendance-list");
+
+  async function fetchAttendanceHistory() {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    const response = await fetch("https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceRecords", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
-  }, 'image/jpeg');
-}
+
+    if (!response.ok) {
+      attendanceList.innerHTML = `<li class="text-red-600">Error fetching attendance</li>`;
+      return;
+    }
+
+    const result = await response.json();
+
+    if (!result || result.length === 0) {
+      attendanceList.innerHTML = `<li class="text-gray-600">No attendance records found.</li>`;
+      return;
+    }
+
+    result.sort((a, b) => b.Timestamp.localeCompare(a.Timestamp));
+
+    attendanceList.innerHTML = "";
+    result.forEach(rec => {
+      const li = document.createElement("li");
+      li.className = "bg-gray-100 p-2 mb-2 rounded shadow";
+      li.innerHTML = `
+        <strong>🕒 Date (IST):</strong> ${rec.TimestampIST}<br>
+        <strong>📍 Location:</strong> ${rec.address || "N/A"}<br>
+        <strong>📮 Pincode:</strong> ${rec.pincode || "N/A"}<br>
+        <strong>🖼️ Photo:</strong> <a href="https://face-attendance-system-using-rek.s3.amazonaws.com/${rec.s3Key}" target="_blank">View</a>
+      `;
+      attendanceList.appendChild(li);
+    });
+  }
+
+  fetchAttendanceHistory();
+
 });
