@@ -1,6 +1,6 @@
 const domain = 'https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com';
 const clientId = '8me27q0v6uiackv03hbqoa1p3';
-const redirectUri = 'https://cloudtechmadan.github.io/my-user/index.html';
+const redirectUri = window.location.origin + window.location.pathname;  // Handles both with/without index.html
 const scope = 'openid profile email employee-api/employee-access';
 const responseType = 'token id_token';
 
@@ -16,6 +16,7 @@ function parseTokenFromUrl() {
     const params = new URLSearchParams(hash.substring(1));
     accessToken = params.get('access_token');
     localStorage.setItem('access_token', accessToken);
+
     // Remove token from URL
     window.history.replaceState({}, document.title, redirectUri);
   } else {
@@ -59,7 +60,7 @@ function capture() {
     status.textContent = '⬆️ Uploading...';
 
     try {
-      // 1. Get presigned URL from backend
+      // Step 1: Get presigned URL
       const presignResp = await fetch(presignUrlApi, {
         method: 'POST',
         headers: {
@@ -72,7 +73,7 @@ function capture() {
       if (!presignResp.ok) throw new Error('❌ Failed to get pre-signed URL');
       const { url } = await presignResp.json();
 
-      // 2. Upload to S3
+      // Step 2: Upload to S3
       const uploadResp = await fetch(url, {
         method: 'PUT',
         headers: {
@@ -83,7 +84,7 @@ function capture() {
 
       if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
-      // 3. Trigger attendance marking
+      // Step 3: Mark attendance
       const attendanceResp = await fetch(attendanceApi, {
         method: 'POST',
         headers: {
@@ -106,10 +107,10 @@ function capture() {
     }
   }, 'image/jpeg');
 }
+
+// Logout
 function logout() {
   localStorage.removeItem('access_token');
-  const logoutUrl = `https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = logoutUrl;
 }
-
-
