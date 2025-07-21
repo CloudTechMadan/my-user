@@ -93,8 +93,12 @@ function capture() {
         body: JSON.stringify({ s3Key: fileName })
       });
 
-      const resultText = await attendanceResp.text();
-      status.textContent = `✅ ${resultText}`;
+      const resultJson = await attendanceResp.json();
+      if (resultJson && resultJson.message && resultJson["TimestampIST"]) {
+        status.textContent = `✅ ${resultJson.message} at ${resultJson["TimestampIST"]}`;
+      } else {
+        status.textContent = '✅ Attendance marked, but no timestamp returned.';
+      }
 
     } catch (err) {
       console.error(err);
