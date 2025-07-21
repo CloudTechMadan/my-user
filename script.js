@@ -8,6 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const attendanceApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/markAttendance';
   const presignUrlApi = 'https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceImageUrl';
 
+  // ✅ Toast Notification Function
+  function showToast(message, duration = 3000) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.style.display = "block";
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, duration);
+  }
+
+  // ✅ Spinner Control Function
+  function toggleSpinner(show) {
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = show ? 'block' : 'none';
+  }
+
   function isTokenExpired(token) {
     try {
       const [, payloadBase64] = token.split(".");
@@ -70,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => {
       console.error('Camera error:', err);
       document.getElementById('status').textContent = '❌ Camera access denied!';
+      showToast('❌ Camera access denied!');
     });
 
   document.getElementById("captureBtn").addEventListener("click", capture);
@@ -87,12 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.toBlob(async (blob) => {
       const fileName = `attendance/${Date.now()}.jpg`;
       status.textContent = '📍 Getting location...';
+      toggleSpinner(true);
 
-      // Get browser location
       navigator.geolocation.getCurrentPosition(async (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        // Reverse Geocoding using Nominatim
         let address = 'Unknown';
         let pincode = 'Unknown';
         try {
@@ -100,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
             {
               headers: {
-                'Accept-Language': 'en'  // 👈 Forces English language
+                'Accept-Language': 'en'
               }
             }
           );
@@ -121,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } catch (err) {
           console.error('⚠️ Reverse geocoding failed:', err);
+          showToast('⚠️ Failed to get address');
         }
 
         try {
@@ -146,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (!uploadResp.ok) throw new Error('❌ Upload failed');
 
-          // Send attendance with geolocation
           status.textContent = '📡 Marking attendance...';
+
           const attendanceResp = await fetch(attendanceApi, {
             method: 'POST',
             headers: {
@@ -168,81 +185,90 @@ document.addEventListener('DOMContentLoaded', () => {
             const msg = resultJson.message || '✅ Attendance marked.';
             const timestamp = resultJson.TimestampIST ? ` at ${resultJson.TimestampIST}` : '';
             status.textContent = `${msg}${timestamp}`;
+            showToast(`${msg}${timestamp}`);
           } else {
             const errorMsg = resultJson.message || '❌ Something went wrong.';
-            status.textContent = resultJson.error
+            const fullError = resultJson.error
               ? `${errorMsg}\n🪵 ${resultJson.error}`
               : errorMsg;
+            status.textContent = fullError;
+            showToast('❌ Attendance failed');
           }
 
         } catch (err) {
           console.error(err);
           status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
+          showToast('❌ Upload or marking failed');
         } finally {
           captureBtn.disabled = false;
+          toggleSpinner(false);
         }
 
       }, (err) => {
         status.textContent = '❌ Location access denied. Please enable location to proceed.';
+        showToast('❌ Location permission denied');
         captureBtn.disabled = false;
+        toggleSpinner(false);
       });
     }, 'image/jpeg');
   }
 
   // 🟩 Show Past Attendance List
   const attendanceList = document.getElementById("attendance-list");
-const errorDiv = document.getElementById("errorMessage");  // 🔹 Error message element
+  const errorDiv = document.getElementById("errorMessage");
 
-async function fetchAttendanceHistory() {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    errorDiv.textContent = "⚠️ No token found. Please log in again.";
-    return;
-  }
+  async function fetchAttendanceHistory() {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      errorDiv.textContent = "⚠️ No token found. Please log in again.";
+      return;
+    }
 
-  try {
-    const response = await fetch("https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceHistory", {
-      method: "GET",
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+    try {
+      const response = await fetch("https://jprbceq0dk.execute-api.us-east-1.amazonaws.com/getAttendanceHistory", {
+        method: "GET",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errMsg = result.message || "Failed to fetch attendance records.";
+        errorDiv.textContent = `⚠️ ${errMsg}`;
+        return;
       }
-    });
 
-    const result = await response.json();
+      if (!result || result.length === 0) {
+        attendanceList.innerHTML = `<li class="text-gray-600">No attendance records found.</li>`;
+        errorDiv.textContent = "";
+        return;
+      }
 
-    if (!response.ok) {
-      const errMsg = result.message || "Failed to fetch attendance records.";
-      errorDiv.textContent = `⚠️ ${errMsg}`;
-      return;
-    }
+      result.sort((a, b) => b.Timestamp.localeCompare(a.Timestamp));
 
-    if (!result || result.length === 0) {
-      attendanceList.innerHTML = `<li class="text-gray-600">No attendance records found.</li>`;
+      attendanceList.innerHTML = "";
+      result.forEach(rec => {
+        const li = document.createElement("li");
+        li.className = "bg-gray-100 p-2 mb-2 rounded shadow";
+        li.innerHTML = `
+          <strong>🕒 Date (IST):</strong> ${rec.TimestampIST}<br>
+          <strong>📍 Location:</strong> ${rec.Address || "N/A"}<br>
+          <strong>📮 Pincode:</strong> ${rec.Pincode || "N/A"}<br>
+        `;
+        attendanceList.appendChild(li);
+      });
+
       errorDiv.textContent = "";
-      return;
+    } catch (error) {
+      console.error("Fetch error:", error);
+      errorDiv.textContent = `⚠️ ${error.message || "An unexpected error occurred while fetching attendance."}`;
+      showToast('⚠️ Failed to fetch history');
     }
-
-    result.sort((a, b) => b.Timestamp.localeCompare(a.Timestamp));
-
-    attendanceList.innerHTML = "";
-    result.forEach(rec => {
-      const li = document.createElement("li");
-      li.className = "bg-gray-100 p-2 mb-2 rounded shadow";
-      li.innerHTML = `
-        <strong>🕒 Date (IST):</strong> ${rec.TimestampIST}<br>
-        <strong>📍 Location:</strong> ${rec.Address || "N/A"}<br>
-        <strong>📮 Pincode:</strong> ${rec.Pincode || "N/A"}<br>
-      `;
-      attendanceList.appendChild(li);
-    });
-
-    errorDiv.textContent = ""; // 🔹 Clear error on success
-  } catch (error) {
-    console.error("Fetch error:", error);
-    errorDiv.textContent = `⚠️ ${error.message || "An unexpected error occurred while fetching attendance."}`;
   }
-}
+
   fetchAttendanceHistory();
 
 });
