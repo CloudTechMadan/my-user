@@ -7,7 +7,11 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="toast" class="toast"></div>
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">Toast message!</div>
+
+  <!-- Loading Spinner -->
+  <div id="spinner" class="spinner"></div>
 
   <div class="container">
     <h1>Face Attendance System</h1>
@@ -27,10 +31,10 @@
 
     <h2>🕒 Recent Attendance</h2>
     <div id="attendanceHistory" class="attendance-history">
-      <ul id="attendance-list" class="mt-4 space-y-2"></ul>
+      <ul id="attendance-list"></ul>
     </div>
 
-    <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
+    <div id="errorMessage"></div>
   </div>
 
   <script src="script.js"></script>
