@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!accessToken || isTokenExpired(accessToken)) {
     localStorage.clear();
     const loginUrl = `${domain}/login?client_id=${clientId}&response_type=${responseType}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-    window.location.href = loginUrl;
+    window.location.href = "https://face-attendance-admin-auth.auth.us-east-1.amazoncognito.com/login?client_id=8me27q0v6uiackv03hbqoa1p3&response_type=token&scope=email+employee-api%2Femployee-access+openid+profile&redirect_uri=https%3A%2F%2Fcloudtechmadan.github.io%2Fmy-user%2Findex.html";
     return;
   }
 
