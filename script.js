@@ -10,13 +10,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ✅ Toast Notification Function
   function showToast(message, duration = 3000) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.style.display = "block";
-    setTimeout(() => {
-      toast.style.display = "none";
-    }, duration);
-  }
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMessage");
+  const closeBtn = document.getElementById("closeToastBtn");
+
+  toastMessage.textContent = message;
+  toast.style.display = "flex";
+
+  // Optional auto-hide after duration
+  const timeoutId = setTimeout(() => {
+    toast.style.display = "none";
+  }, duration);
+
+  // Close button logic
+  closeBtn.onclick = () => {
+    toast.style.display = "none";
+    clearTimeout(timeoutId);
+  };
+}
 
   // ✅ Spinner Control Function
   function toggleSpinner(show) {
