@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } catch (err) {
           console.error('⚠️ Reverse geocoding failed:', err);
-          showToast('⚠️ Failed to get address');
+          showToast(err);
         }
 
         try {
@@ -203,14 +203,16 @@ document.addEventListener('DOMContentLoaded', () => {
               ? `${errorMsg}\n🪵 ${resultJson.error}`
               : errorMsg;
             status.textContent = fullError;
-            showToast('❌ Attendance failed');
+            showToast(fullError);
           }
 
         } catch (err) {
           console.error(err);
-          status.textContent = `❌ ${err.message || 'Something went wrong.'}`;
-          showToast('❌ Upload or marking failed');
-        } finally {
+          const errorMessage = err.message || 'Something went wrong.';
+          status.textContent = errorMessage;
+          showToast(errorMessage);
+        }
+        finally {
           captureBtn.disabled = false;
           toggleSpinner(false);
         }
